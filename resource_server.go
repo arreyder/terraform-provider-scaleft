@@ -23,19 +23,11 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"key_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"key_team": &schema.Schema{
+			"team": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"key_secret": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -61,7 +53,7 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 
 	key_id := d.Get("key_id").(string)
 	key_secret := d.Get("key_secret").(string)
-	key_team := d.Get("key_team").(string)
+	key_team := d.Get("team").(string)
 	project := d.Get("project").(string)
 	hostname := d.Get("hostname").(string)
 
