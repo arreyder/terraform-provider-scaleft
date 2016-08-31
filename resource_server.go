@@ -23,14 +23,6 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"team": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
 		},
 	}
 }

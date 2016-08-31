@@ -24,7 +24,7 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("SCALEFT_KEY_SECRET", nil),
 				Description: "The key secret for the scaleft service user",
 			},
-			"team": &schema.Schema{
+			"key_team": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SCALEFT_TEAM", nil),
