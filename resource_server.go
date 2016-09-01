@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -44,11 +45,13 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 
-	key_id := d.Get("key_id").(string)
-	key_secret := d.Get("key_secret").(string)
-	key_team := d.Get("team").(string)
-	project := d.Get("project").(string)
+	key_id := os.Getenv("SCALEFT_KEY_ID")
+	key_secret := os.Getenv("SCALEFT_KEY_SECRET")
+	key_team := os.Getenv("SCALEFT_TEAM")
+	project := os.Getenv("SCALEFT_PROJECT")
 	hostname := d.Get("hostname").(string)
+
+	fmt.Println("Debug: key_id:%s key_secret:%s key_team:%s project:%s hostname:%s", key_id, key_secret, key_team, project, hostname)
 
 	bearer, err := get_token(key_id, key_secret, key_team)
 	if err != nil {
