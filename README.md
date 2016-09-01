@@ -7,6 +7,14 @@ No one in there right mind would use this.  I have very little clue what I am do
 The create does nothing other than record and object in the tfstate so that we know on destroy we need to delete something.  It would probably be better to grab the ID post enrollment, but then we'd had to rely on ScaleFTs api being available to deploy.  Might be good to try to get the ID but be ok with the api failing and still fall back to what it does now, search for all IDs for a hostname and remove each of them.  For our use case, this is always a sane option, but it may not be for everyone elses.
 
 Example use:
+
+You must set these env variables:
+```
+SCALEFT_KEY="somekey"
+SCALEFT_KEY_SECRET="somesecret"
+SCALEFT_TEAM="someteam"
+SCALEFT_PROJECT="someproject"
+```
 ```
 provider "scaleft" {}
 
