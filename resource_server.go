@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -20,22 +22,6 @@ func resourceServer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"hostname": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"key_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"key_team": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"key_secret": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -59,19 +45,36 @@ func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 
-	key_id := d.Get("key_id").(string)
-	key_secret := d.Get("key_secret").(string)
-	key_team := d.Get("key_team").(string)
-	project := d.Get("project").(string)
+	key_id := os.Getenv("SCALEFT_KEY_ID")
+	key_secret := os.Getenv("SCALEFT_KEY_SECRET")
+	key_team := os.Getenv("SCALEFT_TEAM")
+	project := os.Getenv("SCALEFT_PROJECT")
 	hostname := d.Get("hostname").(string)
 
-	bearer := get_token(key_id, key_secret, key_team)
-	list := get_servers(bearer, key_team, project)
+	fmt.Println("Debug: key_id:%s key_secret:%s key_team:%s project:%s hostname:%s", key_id, key_secret, key_team, project, hostname)
+
+	bearer, err := get_token(key_id, key_secret, key_team)
+	if err != nil {
+		return fmt.Errorf("Error getting token key_id:%s key_team:%s error:%v", key_id, key_team, err)
+	}
+
+	list, err := get_servers(bearer, key_team, project)
+
+	if err != nil {
+		return fmt.Errorf("Error getting server list. key_team:%s error:%v", key_team, err)
+	}
 
 	ids := get_ids_for_hostname(hostname, list)
 
+	if len(ids) == 0 {
+		return fmt.Errorf("Error, ScaleFT api returned no servers that matched hostname:%s", hostname)
+	}
+
 	for _, id := range ids {
-		delete_server(bearer, key_team, project, id)
+		err := delete_server(bearer, key_team, project, id)
+		if err != nil {
+			return fmt.Errorf("Error deleting server at id:%s and key_team:%s project: %s error:%v", id, key_team, project, err)
+		}
 	}
 
 	return nil
@@ -106,7 +109,7 @@ type Servers struct {
 	List []*Server `json:"list"`
 }
 
-func get_token(key_id string, key_secret string, key_team string) string {
+func get_token(key_id string, key_secret string, key_team string) (string, error) {
 	p := &Body{key_id, key_secret}
 	jsonStr, err := json.Marshal(p)
 	url := api + key_team + "/service_token"
@@ -116,14 +119,14 @@ func get_token(key_id string, key_secret string, key_team string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		panic(err)
+		return "error", fmt.Errorf("Error getting token key_id:%s key_team:%s status:%s error:%v", key_id, key_team, string(resp.Status), err)
 	}
 
 	defer resp.Body.Close()
 	b := Bearer{}
 	json.NewDecoder(resp.Body).Decode(&b)
 
-	return b.Bearer_token
+	return b.Bearer_token, err
 }
 
 func get_logs(bearer_token string, key_team string) string {
@@ -141,7 +144,7 @@ func get_logs(bearer_token string, key_team string) string {
 	return s
 }
 
-func get_servers(bearer_token string, key_team string, project string) Servers {
+func get_servers(bearer_token string, key_team string, project string) (Servers, error) {
 	client := &http.Client{}
 	url := api + key_team + "/projects/" + project + "/servers"
 	req, err := http.NewRequest("GET", url, nil)
@@ -149,7 +152,7 @@ func get_servers(bearer_token string, key_team string, project string) Servers {
 	req.Header.Set("Authorization", "Bearer "+bearer_token)
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Errorf("Error listing servers: key_team:%s project: %s status:%s error:%v", key_team, project, string(resp.Status), err)
 	}
 
 	s := struct {
@@ -157,10 +160,10 @@ func get_servers(bearer_token string, key_team string, project string) Servers {
 	}{nil}
 
 	json.NewDecoder(resp.Body).Decode(&s)
-	return s
+	return s, err
 }
 
-func delete_server(bearer_token string, key_team string, project string, server_id string) string {
+func delete_server(bearer_token string, key_team string, project string, server_id string) error {
 	client := &http.Client{}
 	url := api + key_team + "/projects/" + project + "/servers/" + server_id
 	req, err := http.NewRequest("DELETE", url, nil)
@@ -168,10 +171,9 @@ func delete_server(bearer_token string, key_team string, project string, server_
 	req.Header.Set("Authorization", "Bearer "+bearer_token)
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("Error deleting server:%s status:%s error:%v", server_id, string(resp.Status), err)
 	}
-	s := string(resp.Status)
-	return s
+	return nil
 }
 
 func get_ids_for_hostname(hostname string, server_list Servers) []string {
