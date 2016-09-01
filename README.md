@@ -12,10 +12,6 @@ provider "scaleft" {}
 
 resource "scaleft_server" "machine" {
   hostname = "${var.tier}${count.index}${var.aws_suffix}.${var.env_name}.${var.internal_tld}",
-  key_id = "${var.scaleft_key_id}",
-  key_secret = "${var.scaleft_key_secret}",
-  key_team = "${var.scaleft_team}",
-  project = "${var.scaleft_project}",
   count = "${var.aws_count}"
 }
 ```
