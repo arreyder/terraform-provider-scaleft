@@ -23,3 +23,7 @@ resource "scaleft_server" "machine" {
   count = "${var.aws_count}"
 }
 ```
+
+Depending on what variables you reference here, you may need to add a depends_on "[some_resource]" to make sure things happen as they should.
+
+Currenty we log but do not fail if a list for a server is empty (no matches found for hostname) or a delete operation fails for any host with the hostname we are looking for.  
