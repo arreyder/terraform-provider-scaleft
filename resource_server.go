@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -51,7 +52,7 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	project := os.Getenv("SCALEFT_PROJECT")
 	hostname := d.Get("hostname").(string)
 
-	fmt.Println("Debug: key_id:%s key_secret:%s key_team:%s project:%s hostname:%s", key_id, key_secret, key_team, project, hostname)
+	log.Printf("[DEBUG] key_id:%s key_secret:%s key_team:%s project:%s hostname:%s", key_id, key_secret, key_team, project, hostname)
 
 	bearer, err := get_token(key_id, key_secret, key_team)
 	if err != nil {
@@ -67,13 +68,17 @@ func resourceServerDelete(d *schema.ResourceData, m interface{}) error {
 	ids := get_ids_for_hostname(hostname, list)
 
 	if len(ids) == 0 {
-		return fmt.Errorf("Error, ScaleFT api returned no servers that matched hostname:%s", hostname)
+		//	return fmt.Errorf("Error, ScaleFT api returned no servers that matched hostname:%s", hostname)
+		//      This should not happen, but if it does, it's ok?
+		log.Printf("[WARN] No servers matched for Hostname:%s, Team:%s, Project:%s.  We'll keep going though.", hostname, key_team, project)
+		return nil
 	}
 
 	for _, id := range ids {
 		err := delete_server(bearer, key_team, project, id)
 		if err != nil {
-			return fmt.Errorf("Error deleting server at id:%s and key_team:%s project: %s error:%v", id, key_team, project, err)
+			log.Printf("[WARN] Failed to delete server with hostname: %s at ScaleFT ID:%s, error:%s", hostname, id, err)
+			//              return fmt.Errorf("Error deleting server at id:%s and key_team:%s project: %s error:%v", id, key_team, project, err)
 		}
 	}
 
