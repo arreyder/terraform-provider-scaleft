@@ -13,7 +13,7 @@ build: vet osx linux
 	go install .
 
 test: build
-	TF_ACC=yes MESOS_KAFKA_URL="http://dev.banno.com:7000" go test -v ./...
+	go test -v ./...
 
 release:
 	./bin/release.sh
