@@ -317,14 +317,6 @@ func (r *Resource) InternalValidate(topSchemaMap schemaMap, writable bool) error
 
 		tsm = schemaMap(r.Schema)
 
-		// Destroy, and Read are required
-		if r.Read == nil {
-			return fmt.Errorf("Read must be implemented")
-		}
-		if r.Delete == nil {
-			return fmt.Errorf("Delete must be implemented")
-		}
-
 		// If we have an importer, we need to verify the importer.
 		if r.Importer != nil {
 			if err := r.Importer.InternalValidate(); err != nil {
@@ -391,18 +383,4 @@ func (r *Resource) recordCurrentSchemaVersion(
 		state.Meta["schema_version"] = strconv.Itoa(r.SchemaVersion)
 	}
 	return state
-}
-
-// Noop is a convenience implementation of resource function which takes
-// no action and returns no error.
-func Noop(*ResourceData, interface{}) error {
-	return nil
-}
-
-// RemoveFromState is a convenience implementation of a resource function
-// which sets the resource ID to empty string (to remove it from state)
-// and returns no error.
-func RemoveFromState(d *ResourceData, _ interface{}) error {
-	d.SetId("")
-	return nil
 }

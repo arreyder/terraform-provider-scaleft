@@ -20,7 +20,6 @@ type MockHook struct {
 	PostApplyError       error
 	PostApplyReturn      HookAction
 	PostApplyReturnError error
-	PostApplyFn          func(*InstanceInfo, *InstanceState, error) (HookAction, error)
 
 	PreDiffCalled bool
 	PreDiffInfo   *InstanceInfo
@@ -112,11 +111,6 @@ func (h *MockHook) PostApply(n *InstanceInfo, s *InstanceState, e error) (HookAc
 	h.PostApplyInfo = n
 	h.PostApplyState = s
 	h.PostApplyError = e
-
-	if h.PostApplyFn != nil {
-		return h.PostApplyFn(n, s, e)
-	}
-
 	return h.PostApplyReturn, h.PostApplyReturnError
 }
 

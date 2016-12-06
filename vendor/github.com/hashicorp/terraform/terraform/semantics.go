@@ -108,25 +108,30 @@ func smcUserVariables(c *config.Config, vs map[string]interface{}) []error {
 			switch proposedValue.(type) {
 			case string:
 				continue
+			default:
+				errs = append(errs, fmt.Errorf("variable %s should be type %s, got %s",
+					name, declaredType.Printable(), hclTypeName(proposedValue)))
 			}
 		case config.VariableTypeMap:
-			switch v := proposedValue.(type) {
+			switch proposedValue.(type) {
 			case map[string]interface{}:
 				continue
-			case []map[string]interface{}:
-				// if we have a list of 1 map, it will get coerced later as needed
-				if len(v) == 1 {
-					continue
-				}
+			default:
+				errs = append(errs, fmt.Errorf("variable %s should be type %s, got %s",
+					name, declaredType.Printable(), hclTypeName(proposedValue)))
 			}
 		case config.VariableTypeList:
 			switch proposedValue.(type) {
 			case []interface{}:
 				continue
+			default:
+				errs = append(errs, fmt.Errorf("variable %s should be type %s, got %s",
+					name, declaredType.Printable(), hclTypeName(proposedValue)))
 			}
+		default:
+			errs = append(errs, fmt.Errorf("variable %s should be type %s, got %s",
+				name, declaredType.Printable(), hclTypeName(proposedValue)))
 		}
-		errs = append(errs, fmt.Errorf("variable %s should be type %s, got %s",
-			name, declaredType.Printable(), hclTypeName(proposedValue)))
 	}
 
 	// TODO(mitchellh): variables that are unknown

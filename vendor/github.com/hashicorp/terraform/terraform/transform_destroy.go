@@ -1,6 +1,8 @@
 package terraform
 
-import "github.com/hashicorp/terraform/dag"
+import (
+	"github.com/hashicorp/terraform/dag"
+)
 
 // GraphNodeDestroyable is the interface that nodes that can be destroyed
 // must implement. This is used to automatically handle the creation of
@@ -151,7 +153,7 @@ func (t *CreateBeforeDestroyTransformer) Transform(g *Graph) error {
 		}
 
 		// If the node doesn't need to create before destroy, then continue
-		if !dn.CreateBeforeDestroy() && noCreateBeforeDestroyAncestors(g, dn) {
+		if !dn.CreateBeforeDestroy() {
 			continue
 		}
 
@@ -196,30 +198,6 @@ func (t *CreateBeforeDestroyTransformer) Transform(g *Graph) error {
 	}
 
 	return nil
-}
-
-// noCreateBeforeDestroyAncestors verifies that a vertex has no ancestors that
-// are CreateBeforeDestroy.
-// If this vertex has an ancestor with CreateBeforeDestroy, we will need to
-// inherit that behavior and re-order the edges even if this node type doesn't
-// directly implement CreateBeforeDestroy.
-func noCreateBeforeDestroyAncestors(g *Graph, v dag.Vertex) bool {
-	s, _ := g.Ancestors(v)
-	if s == nil {
-		return true
-	}
-	for _, v := range s.List() {
-		dn, ok := v.(GraphNodeDestroy)
-		if !ok {
-			continue
-		}
-
-		if dn.CreateBeforeDestroy() {
-			// some ancestor is CreateBeforeDestroy, so we need to follow suit
-			return false
-		}
-	}
-	return true
 }
 
 // PruneDestroyTransformer is a GraphTransformer that removes the destroy

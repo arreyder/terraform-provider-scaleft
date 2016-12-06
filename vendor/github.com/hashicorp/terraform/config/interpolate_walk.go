@@ -32,7 +32,7 @@ type interpolationWalker struct {
 	cs          []reflect.Value
 	csKey       []reflect.Value
 	csData      interface{}
-	sliceIndex  []int
+	sliceIndex  int
 	unknownKeys []string
 }
 
@@ -54,6 +54,9 @@ type interpolationWalkerContextFunc func(reflectwalk.Location, ast.Node)
 
 func (w *interpolationWalker) Enter(loc reflectwalk.Location) error {
 	w.loc = loc
+	if loc == reflectwalk.WalkLoc {
+		w.sliceIndex = -1
+	}
 	return nil
 }
 
@@ -72,7 +75,7 @@ func (w *interpolationWalker) Exit(loc reflectwalk.Location) error {
 		w.cs = w.cs[:len(w.cs)-1]
 	case reflectwalk.SliceElem:
 		w.csKey = w.csKey[:len(w.csKey)-1]
-		w.sliceIndex = w.sliceIndex[:len(w.sliceIndex)-1]
+		w.sliceIndex = -1
 	}
 
 	return nil
@@ -87,8 +90,8 @@ func (w *interpolationWalker) MapElem(m, k, v reflect.Value) error {
 	w.csData = k
 	w.csKey = append(w.csKey, k)
 
-	if l := len(w.sliceIndex); l > 0 {
-		w.key = append(w.key, fmt.Sprintf("%d.%s", w.sliceIndex[l-1], k.String()))
+	if w.sliceIndex != -1 {
+		w.key = append(w.key, fmt.Sprintf("%d.%s", w.sliceIndex, k.String()))
 	} else {
 		w.key = append(w.key, k.String())
 	}
@@ -104,7 +107,7 @@ func (w *interpolationWalker) Slice(s reflect.Value) error {
 
 func (w *interpolationWalker) SliceElem(i int, elem reflect.Value) error {
 	w.csKey = append(w.csKey, reflect.ValueOf(i))
-	w.sliceIndex = append(w.sliceIndex, i)
+	w.sliceIndex = i
 	return nil
 }
 

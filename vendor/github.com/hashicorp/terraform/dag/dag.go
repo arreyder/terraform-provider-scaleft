@@ -206,11 +206,11 @@ func (g *AcyclicGraph) Walk(cb WalkFunc) error {
 					case <-ch:
 						break DepSatisfied
 					case <-time.After(time.Second * 5):
-						log.Printf("[DEBUG] vertex %q, waiting for: %q",
+						log.Printf("[DEBUG] vertex %s, waiting for: %s",
 							VertexName(v), VertexName(deps[i]))
 					}
 				}
-				log.Printf("[DEBUG] vertex %q, got dep: %q",
+				log.Printf("[DEBUG] vertex %s, got dep: %s",
 					VertexName(v), VertexName(deps[i]))
 			}
 

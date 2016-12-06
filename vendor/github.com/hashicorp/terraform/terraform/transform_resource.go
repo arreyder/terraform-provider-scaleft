@@ -8,15 +8,15 @@ import (
 	"github.com/hashicorp/terraform/dag"
 )
 
-// ResourceCountTransformerOld is a GraphTransformer that expands the count
+// ResourceCountTransformer is a GraphTransformer that expands the count
 // out for a specific resource.
-type ResourceCountTransformerOld struct {
+type ResourceCountTransformer struct {
 	Resource *config.Resource
 	Destroy  bool
 	Targets  []ResourceAddress
 }
 
-func (t *ResourceCountTransformerOld) Transform(g *Graph) error {
+func (t *ResourceCountTransformer) Transform(g *Graph) error {
 	// Expand the resource count
 	count, err := t.Resource.Count()
 	if err != nil {
@@ -72,7 +72,7 @@ func (t *ResourceCountTransformerOld) Transform(g *Graph) error {
 	return nil
 }
 
-func (t *ResourceCountTransformerOld) nodeIsTargeted(node dag.Vertex) bool {
+func (t *ResourceCountTransformer) nodeIsTargeted(node dag.Vertex) bool {
 	// no targets specified, everything stays in the graph
 	if len(t.Targets) == 0 {
 		return true
@@ -862,7 +862,6 @@ func (n *graphNodeExpandedResourceDestroy) ConfigType() GraphNodeConfigType {
 // GraphNodeEvalable impl.
 func (n *graphNodeExpandedResourceDestroy) EvalTree() EvalNode {
 	info := n.instanceInfo()
-	info.uniqueExtra = "destroy"
 
 	var diffApply *InstanceDiff
 	var provider ResourceProvider
@@ -896,9 +895,6 @@ func (n *graphNodeExpandedResourceDestroy) EvalTree() EvalNode {
 					},
 					Then: EvalNoop{},
 				},
-
-				// Load the instance info so we have the module path set
-				&EvalInstanceInfo{Info: info},
 
 				&EvalGetProvider{
 					Name:   n.ProvidedBy()[0],

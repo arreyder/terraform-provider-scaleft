@@ -223,9 +223,6 @@ func stringToPrimitive(
 			returnVal = false
 			break
 		}
-		if computed {
-			break
-		}
 
 		v, err := strconv.ParseBool(value)
 		if err != nil {

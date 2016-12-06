@@ -26,13 +26,14 @@ type BuiltinEvalContext struct {
 	InterpolaterVars    map[string]map[string]interface{}
 	InterpolaterVarLock *sync.Mutex
 
-	Components          contextComponentFactory
 	Hooks               []Hook
 	InputValue          UIInput
+	Providers           map[string]ResourceProviderFactory
 	ProviderCache       map[string]ResourceProvider
 	ProviderConfigCache map[string]*ResourceConfig
 	ProviderInputConfig map[string]map[string]interface{}
 	ProviderLock        *sync.Mutex
+	Provisioners        map[string]ResourceProvisionerFactory
 	ProvisionerCache    map[string]ResourceProvisioner
 	ProvisionerLock     *sync.Mutex
 	DiffValue           *Diff
@@ -80,18 +81,23 @@ func (ctx *BuiltinEvalContext) InitProvider(n string) (ResourceProvider, error) 
 	ctx.ProviderLock.Lock()
 	defer ctx.ProviderLock.Unlock()
 
-	providerPath := make([]string, len(ctx.Path())+1)
-	copy(providerPath, ctx.Path())
-	providerPath[len(providerPath)-1] = n
-	key := PathCacheKey(providerPath)
-
 	typeName := strings.SplitN(n, ".", 2)[0]
-	p, err := ctx.Components.ResourceProvider(typeName, key)
+
+	f, ok := ctx.Providers[typeName]
+	if !ok {
+		return nil, fmt.Errorf("Provider '%s' not found", typeName)
+	}
+
+	p, err := f()
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.ProviderCache[key] = p
+	providerPath := make([]string, len(ctx.Path())+1)
+	copy(providerPath, ctx.Path())
+	providerPath[len(providerPath)-1] = n
+
+	ctx.ProviderCache[PathCacheKey(providerPath)] = p
 	return p, nil
 }
 
@@ -225,17 +231,21 @@ func (ctx *BuiltinEvalContext) InitProvisioner(
 	ctx.ProvisionerLock.Lock()
 	defer ctx.ProvisionerLock.Unlock()
 
-	provPath := make([]string, len(ctx.Path())+1)
-	copy(provPath, ctx.Path())
-	provPath[len(provPath)-1] = n
-	key := PathCacheKey(provPath)
+	f, ok := ctx.Provisioners[n]
+	if !ok {
+		return nil, fmt.Errorf("Provisioner '%s' not found", n)
+	}
 
-	p, err := ctx.Components.ResourceProvisioner(n, key)
+	p, err := f()
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.ProvisionerCache[key] = p
+	provPath := make([]string, len(ctx.Path())+1)
+	copy(provPath, ctx.Path())
+	provPath[len(provPath)-1] = n
+
+	ctx.ProvisionerCache[PathCacheKey(provPath)] = p
 	return p, nil
 }
 
@@ -331,4 +341,9 @@ func (ctx *BuiltinEvalContext) State() (*State, *sync.RWMutex) {
 }
 
 func (ctx *BuiltinEvalContext) init() {
+	// We nil-check the things below because they're meant to be configured,
+	// and we just default them to non-nil.
+	if ctx.Providers == nil {
+		ctx.Providers = make(map[string]ResourceProviderFactory)
+	}
 }

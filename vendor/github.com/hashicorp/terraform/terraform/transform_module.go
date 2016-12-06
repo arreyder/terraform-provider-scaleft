@@ -9,9 +9,9 @@ import (
 // ModuleDestroyTransformer is a GraphTransformer that adds a node
 // to the graph that will just mark the full module for destroy in
 // the destroy scenario.
-type ModuleDestroyTransformerOld struct{}
+type ModuleDestroyTransformer struct{}
 
-func (t *ModuleDestroyTransformerOld) Transform(g *Graph) error {
+func (t *ModuleDestroyTransformer) Transform(g *Graph) error {
 	// Create the node
 	n := &graphNodeModuleDestroy{Path: g.Path}
 

@@ -157,7 +157,7 @@ func (p *MockResourceProvider) Apply(
 		return p.ApplyFn(info, state, diff)
 	}
 
-	return p.ApplyReturn.DeepCopy(), p.ApplyReturnError
+	return p.ApplyReturn, p.ApplyReturnError
 }
 
 func (p *MockResourceProvider) Diff(
@@ -175,7 +175,7 @@ func (p *MockResourceProvider) Diff(
 		return p.DiffFn(info, state, desired)
 	}
 
-	return p.DiffReturn.DeepCopy(), p.DiffReturnError
+	return p.DiffReturn, p.DiffReturnError
 }
 
 func (p *MockResourceProvider) Refresh(
@@ -192,7 +192,7 @@ func (p *MockResourceProvider) Refresh(
 		return p.RefreshFn(info, s)
 	}
 
-	return p.RefreshReturn.DeepCopy(), p.RefreshReturnError
+	return p.RefreshReturn, p.RefreshReturnError
 }
 
 func (p *MockResourceProvider) Resources() []ResourceType {
@@ -214,15 +214,7 @@ func (p *MockResourceProvider) ImportState(info *InstanceInfo, id string) ([]*In
 		return p.ImportStateFn(info, id)
 	}
 
-	var result []*InstanceState
-	if p.ImportStateReturn != nil {
-		result = make([]*InstanceState, len(p.ImportStateReturn))
-		for i, v := range p.ImportStateReturn {
-			result[i] = v.DeepCopy()
-		}
-	}
-
-	return result, p.ImportStateReturnError
+	return p.ImportStateReturn, p.ImportStateReturnError
 }
 
 func (p *MockResourceProvider) ValidateDataSource(t string, c *ResourceConfig) ([]string, []error) {
@@ -253,7 +245,7 @@ func (p *MockResourceProvider) ReadDataDiff(
 		return p.ReadDataDiffFn(info, desired)
 	}
 
-	return p.ReadDataDiffReturn.DeepCopy(), p.ReadDataDiffReturnError
+	return p.ReadDataDiffReturn, p.ReadDataDiffReturnError
 }
 
 func (p *MockResourceProvider) ReadDataApply(
@@ -270,7 +262,7 @@ func (p *MockResourceProvider) ReadDataApply(
 		return p.ReadDataApplyFn(info, d)
 	}
 
-	return p.ReadDataApplyReturn.DeepCopy(), p.ReadDataApplyReturnError
+	return p.ReadDataApplyReturn, p.ReadDataApplyReturnError
 }
 
 func (p *MockResourceProvider) DataSources() []DataSource {
