@@ -156,8 +156,10 @@ func get_servers(bearer_token string, key_team string, project string) (Servers,
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+bearer_token)
 	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
 	if err != nil {
-		fmt.Errorf("Error listing servers: key_team:%s project: %s status:%s error:%v", key_team, project, string(resp.Status), err)
+		return Servers{}, fmt.Errorf("Error listing servers: key_team:%s project:%s status:%s error:%v", key_team, project, string(resp.Status), err)
 	}
 
 	s := struct {
