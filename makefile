@@ -9,11 +9,11 @@ linux:
 osx:
 	GOOS=darwin GOARCH=386 go build -o bin/terraform-provider-scaleft-osx .
 
-build: vet osx linux
+install:
 	go install .
 
 test: build
-	TF_ACC=yes MESOS_KAFKA_URL="http://dev.banno.com:7000" go test -v ./...
+	go test -v ./...
 
-release:
+release: vet osx linux
 	./bin/release.sh
